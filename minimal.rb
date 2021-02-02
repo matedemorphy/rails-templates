@@ -5,9 +5,8 @@ run "if uname | grep -q 'Darwin'; then pgrep spring | xargs kill -9; fi"
 inject_into_file 'Gemfile', before: 'group :development, :test do' do
   <<~RUBY
     gem 'autoprefixer-rails'
-    gem 'font-awesome-sass'
-    gem 'simple_form'
-
+    gem 'local_time'
+    gem 'fast_jsonapi'
   RUBY
 end
 
@@ -17,6 +16,17 @@ inject_into_file 'Gemfile', after: 'group :development, :test do' do
   gem 'pry-byebug'
   gem 'pry-rails'
   gem 'dotenv-rails'
+
+  RUBY
+end
+
+inject_into_file 'Gemfile', after: 'group :development do' do
+  <<-RUBY
+
+  gem 'annotate'
+  gem 'better_errors'
+  gem 'binding_of_caller'
+
   RUBY
 end
 
@@ -82,7 +92,6 @@ after_bundle do
   # Generators: db + simple form + pages controller
   ########################################
   rails_command 'db:drop db:create db:migrate'
-  generate('simple_form:install', '--bootstrap')
   generate(:controller, 'pages', 'home', '--skip-routes', '--no-test-framework')
 
   # Routes
@@ -102,7 +111,6 @@ after_bundle do
 
   # Webpacker / Yarn
   ########################################
-  run 'yarn add popper.js jquery bootstrap'
   append_file 'app/javascript/packs/application.js', <<~JS
 
 
@@ -112,7 +120,6 @@ after_bundle do
     // ----------------------------------------------------
 
     // External imports
-    import "bootstrap";
 
     // Internal imports, e.g:
     // import { initSelect2 } from '../components/init_select2';
@@ -130,15 +137,6 @@ after_bundle do
       // Preventing Babel from transpiling NodeModules packages
       environment.loaders.delete('nodeModules');
 
-      // Bootstrap 4 has a dependency over jQuery & Popper.js:
-      environment.plugins.prepend('Provide',
-        new webpack.ProvidePlugin({
-          $: 'jquery',
-          jQuery: 'jquery',
-          Popper: ['popper.js', 'default']
-        })
-      );
-
     JS
   end
 
@@ -148,12 +146,12 @@ after_bundle do
 
   # Rubocop
   ########################################
-  run 'curl -L https://raw.githubusercontent.com/lewagon/rails-templates/master/.rubocop.yml > .rubocop.yml'
+  run 'curl -L https://raw.githubusercontent.com/matedemorphy/rails-templates/master/.rubocop.yml > .rubocop.yml'
 
   # Git
   ########################################
   git add: '.'
-  git commit: "-m 'Initial commit with minimal template from https://github.com/lewagon/rails-templates'"
+  git commit: "-m 'Initial commit with minimal template from https://github.com/matedemorphy/rails-templates'"
 
   # Fix puma config
   gsub_file('config/puma.rb', 'pidfile ENV.fetch("PIDFILE") { "tmp/pids/server.pid" }', '# pidfile ENV.fetch("PIDFILE") { "tmp/pids/server.pid" }')
